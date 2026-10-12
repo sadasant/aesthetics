@@ -1,0 +1,86 @@
+id: solid
+name: SOLID
+foundation: The SOLID principles of object-oriented design (Robert C. Martin)
+description: Cohesion, responsibilities, abstractions, and dependency boundaries.
+references:
+  - https://en.wikipedia.org/wiki/SOLID
+guidelines:
+  - id: single-responsibility
+    applies_to: [file]
+    content: [code]
+    exclude: &tests ["**/*_test.*", "**/*.test.*", "**/*.spec.*", "**/test_*", "**/test/**", "**/tests/**", "**/__tests__/**"]
+    text: >-
+      Each module and type has one reason to change: its contents serve a single concern or a single
+      group of stakeholders.
+    recommendation: Separate the concerns that change for different reasons into different modules or types.
+    remedies:
+      - Extract the second concern into its own type or module.
+      - Move persistence, presentation, or transport details out of domain logic.
+
+  - id: open-closed
+    applies_to: [file]
+    content: [code]
+    exclude: *tests
+    text: >-
+      Behavior that is expected to vary can be extended by adding code rather than by editing stable,
+      tested code.
+    recommendation: Introduce an extension point where variation is expected instead of editing stable code for each case.
+    remedies:
+      - Replace growing conditional chains over types or modes with polymorphism or a lookup table.
+      - Pass varying behavior in as a function or interface instead of hard-coding each case.
+
+  - id: substitutable
+    applies_to: [file]
+    content: [code]
+    exclude: *tests
+    text: >-
+      Implementations honor the contracts of the interfaces and base types they implement; no implementation
+      surprises callers by weakening guarantees or rejecting valid inputs.
+    recommendation: Make implementations honor their contracts, or stop presenting them as substitutes.
+    remedies:
+      - Remove overrides that throw "not supported" or silently ignore calls.
+      - Split the interface so each implementation can honor all of it.
+
+  - id: interface-segregation
+    applies_to: [file]
+    content: [code]
+    exclude: *tests
+    text: Interfaces are narrow and shaped by their clients; no client depends on methods it does not use.
+    recommendation: Split broad interfaces into smaller ones shaped by what each client uses.
+    remedies:
+      - Split the broad interface into role-specific interfaces.
+      - Have clients depend on the narrowest interface that provides what they use.
+
+  - id: depend-on-abstractions
+    applies_to: [file]
+    content: [code]
+    exclude: *tests
+    text: >-
+      High-level policy depends on abstractions rather than on concrete low-level details, and
+      dependencies are passed in rather than constructed deep inside.
+    recommendation: Invert the dependency so that policy code depends on an abstraction it receives.
+    remedies:
+      - Inject collaborators through constructors or parameters instead of instantiating them internally.
+      - Define the interface next to the code that uses it and depend on that instead of the concrete type.
+
+  - id: cohesive-packages
+    applies_to: [directory]
+    content: [code]
+    text: >-
+      The package is cohesive: its parts change together, and it depends on packages that are more stable
+      than itself, never on its own dependents.
+    recommendation: Regroup code so that what changes together lives together and dependencies point toward stability.
+    remedies:
+      - Move files that change for different reasons into separate packages.
+      - Break dependencies on packages that depend back on this one.
+
+  - id: dependency-direction
+    applies_to: [repository]
+    content: [code]
+    text: >-
+      Dependencies between components flow in one direction, toward stable core abstractions, without
+      cycles.
+    recommendation: Restructure dependencies so they point toward stable core components and contain no cycles.
+    remedies:
+      - Break dependency cycles by extracting shared abstractions into a lower-level component.
+      - Move infrastructure details to the edges so the core depends on nothing volatile.

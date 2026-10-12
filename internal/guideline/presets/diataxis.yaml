@@ -1,0 +1,67 @@
+id: diataxis
+name: Diátaxis
+foundation: The Diátaxis documentation framework (Daniele Procida)
+description: Documentation organized according to tutorials, how-to guides, reference, and explanation.
+references:
+  - https://diataxis.fr/
+guidelines:
+  - id: one-mode
+    applies_to: [file]
+    content: [docs]
+    exclude: ["{CHANGELOG,LICENSE,LICENCE,COPYING,NOTICE,AUTHORS,CODEOWNERS}*"]
+    conflicts_with: [readme/orientation, readme/usage]
+    text: >-
+      The document serves one documentation mode (tutorial, how-to guide, reference, or explanation)
+      instead of mixing them.
+    recommendation: Split the document so that each part serves one documentation mode.
+    remedies:
+      - Move explanatory background out of step-by-step material into a separate explanation document.
+      - Move reference tables and option lists out of narrative material into a reference document.
+      - Split learning-oriented tutorial content from goal-oriented how-to content.
+
+  - id: mode-conventions
+    applies_to: [file]
+    content: [docs]
+    exclude: ["{CHANGELOG,LICENSE,LICENCE,COPYING,NOTICE,AUTHORS,CODEOWNERS}*"]
+    text: The document follows the conventions of the documentation mode it serves.
+    instructions: >-
+      The modes are tutorial, how-to guide, reference, and explanation. Judge the document only by the
+      conventions of its own mode.
+    recommendation: Rewrite the document to follow the conventions of its mode.
+    remedies:
+      - For a tutorial, give concrete steps that always lead to a visible, working result.
+      - For a how-to guide, state the goal up front and give only the steps that reach it.
+      - For reference, describe the subject consistently and completely without instruction or opinion.
+      - For explanation, discuss why and how things are as they are, without step-by-step instruction.
+
+  - id: mode-signposted
+    applies_to: [file]
+    content: [docs]
+    exclude: ["{CHANGELOG,LICENSE,LICENCE,COPYING,NOTICE,AUTHORS,CODEOWNERS}*"]
+    severity: info
+    text: The document's title and opening tell readers what kind of document it is and what they will get from it.
+    recommendation: Rewrite the title and opening to state the document's mode and what the reader will get.
+
+  - id: organized-by-mode
+    applies_to: [directory]
+    match: ["{docs,doc,documentation,Documentation}"]
+    text: >-
+      The documentation is organized by mode, so readers can find tutorials, how-to guides, reference,
+      and explanation separately.
+    recommendation: Organize the documentation into tutorials, how-to guides, reference, and explanation.
+    remedies:
+      - Create one section or directory per mode and move each document into the matching one.
+      - Add an index page that introduces the four modes and links to each section.
+
+  - id: covers-needs
+    applies_to: [repository]
+    content: [docs]
+    text: >-
+      The documentation as a whole serves learning, accomplishing tasks, looking facts up, and understanding,
+      or makes clear which of these needs it deliberately leaves out.
+    recommendation: Add documentation for the unmet needs or state why they are out of scope.
+    remedies:
+      - Add a getting-started tutorial.
+      - Add how-to guides for common tasks.
+      - Add reference documentation for the public interface.
+      - Add an explanation of the design and its trade-offs.

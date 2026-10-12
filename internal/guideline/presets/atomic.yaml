@@ -1,0 +1,57 @@
+id: atomic
+name: Atomic Changes
+foundation: Atomic commits and focused changes
+description: Focused, coherent changes without unrelated modifications.
+references:
+  - https://en.wikipedia.org/wiki/Atomic_commit#Revision_control
+guidelines:
+  - id: single-purpose
+    applies_to: [diff]
+    severity: error
+    text: The change has one coherent purpose that can be summarized in a single sentence.
+    recommendation: Split the change so that each part has one purpose.
+    remedies:
+      - Split the change into separate commits or pull requests, one per purpose.
+      - Remove the parts that serve a second purpose and submit them separately.
+
+  - id: no-unrelated-modifications
+    applies_to: [diff]
+    severity: error
+    text: >-
+      The change contains no unrelated edits such as drive-by refactors, reformatting, renames, or fixes
+      that do not serve its purpose.
+    recommendation: Remove unrelated edits from the change and submit them separately if they are worth keeping.
+    remedies:
+      - Revert formatting-only and whitespace edits in code the change does not otherwise touch.
+      - Move drive-by refactors and renames into their own change.
+      - Move unrelated fixes into their own change.
+
+  - id: self-contained
+    applies_to: [diff]
+    text: >-
+      The change is self-contained: it includes what its purpose requires, such as tests and documentation
+      updates, and leaves the repository consistent.
+    recommendation: Complete the change so it stands on its own.
+    remedies:
+      - Add or update the tests that cover the changed behavior.
+      - Update documentation and call sites affected by the change.
+      - Remove leftovers such as debugging code, commented-out code, or temporary files.
+
+  - id: consistent-with-surroundings
+    applies_to: [diff]
+    text: The changed code follows the conventions, naming, and structure of the code around it.
+    recommendation: Align the new code with the conventions of the surrounding code.
+    remedies:
+      - Rename new identifiers to follow the naming used nearby.
+      - Use the error-handling, logging, and structure patterns the surrounding code already uses.
+      - Place new code where similar code already lives.
+
+  - id: reviewable
+    applies_to: [diff]
+    text: >-
+      The change is small enough to review as one unit and could not naturally be split into
+      independent changes.
+    recommendation: Split the change into smaller, independently reviewable steps.
+    remedies:
+      - Land preparatory refactors separately before the behavior change.
+      - Split independent features or fixes into separate changes.

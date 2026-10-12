@@ -1,0 +1,69 @@
+id: readme
+name: Standard Readme
+foundation: Standard Readme (Richard Littauer)
+description: Clear purpose, installation, usage, and relevant repository orientation.
+references:
+  - https://github.com/RichardLitt/standard-readme
+guidelines:
+  - id: states-purpose
+    applies_to: [file]
+    match: ["{README,Readme,readme}{,.md,.markdown,.rst,.txt,.adoc,.org}"]
+    severity: error
+    text: >-
+      The README opens with the project's name and a short statement of what it is, what problem it
+      solves, and who it is for.
+    recommendation: Open the README with the name and a one- or two-sentence statement of purpose.
+    remedies:
+      - Add a short description directly below the title that says what the project does and why.
+      - Move background and history below the description so the purpose comes first.
+
+  - id: installation
+    applies_to: [file]
+    match: ["{README,Readme,readme}{,.md,.markdown,.rst,.txt,.adoc,.org}"]
+    max_depth: 0
+    text: >-
+      The README explains how to install or obtain the project, including prerequisites, with commands
+      a reader can copy.
+    recommendation: Add an Install section with prerequisites and copyable commands.
+    remedies:
+      - Add an Install section with the exact commands to install the project.
+      - List prerequisites such as language runtimes or system tools and their versions.
+
+  - id: usage
+    applies_to: [file]
+    match: ["{README,Readme,readme}{,.md,.markdown,.rst,.txt,.adoc,.org}"]
+    text: The README shows how to use the project with concrete, minimal examples.
+    recommendation: Add a Usage section with a minimal working example.
+    remedies:
+      - Add a Usage section with the smallest complete example of the main use case.
+      - Show expected output next to example commands or code.
+
+  - id: orientation
+    applies_to: [file]
+    match: ["{README,Readme,readme}{,.md,.markdown,.rst,.txt,.adoc,.org}"]
+    max_depth: 0
+    text: >-
+      The README orients newcomers where it matters: where further documentation lives, how the
+      repository is organized, how to contribute or get help, and the license.
+    recommendation: Add the missing orientation sections, linking out instead of repeating content.
+    remedies:
+      - Link to further documentation instead of embedding it.
+      - Add Contributing and License sections.
+      - Briefly describe the repository layout when it is not obvious.
+
+  - id: conventional-structure
+    applies_to: [file]
+    match: ["{README,Readme,readme}{,.md,.markdown,.rst,.txt,.adoc,.org}"]
+    text: >-
+      The README uses clear headings in a conventional order (title, description, install, usage, further
+      sections) and stays concise.
+    recommendation: Restructure the README into conventional, clearly headed sections and trim it.
+    remedies:
+      - Reorder sections to title, description, install, usage, then everything else.
+      - Move long reference or tutorial material into separate documents and link to them.
+
+  - id: repository-has-readme
+    applies_to: [repository]
+    severity: error
+    text: The repository has a README at its root that explains what the project is and how to start using it.
+    recommendation: Add a root README that states the project's purpose and how to get started.

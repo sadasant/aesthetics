@@ -1,0 +1,77 @@
+id: kiss
+name: Keep It Simple
+foundation: The KISS principle ("Keep it simple, stupid", Kelly Johnson)
+description: Directness and avoidance of unnecessary complexity.
+references:
+  - https://en.wikipedia.org/wiki/KISS_principle
+guidelines:
+  - id: direct
+    applies_to: [file]
+    content: [code]
+    text: >-
+      The code solves its problem directly; a reader can follow the main path without decoding
+      indirection, cleverness, or unnecessary generality.
+    recommendation: Rewrite the convoluted parts as the most direct code that solves the problem.
+    remedies:
+      - Inline wrappers and indirections that add no meaning.
+      - Replace clever constructs with plain, explicit control flow.
+      - Flatten deeply nested logic with early returns.
+
+  - id: no-speculative-generality
+    applies_to: [file, diff]
+    content: [code]
+    conflicts_with: [solid/open-closed, solid/depend-on-abstractions]
+    text: >-
+      The code contains no abstractions, parameters, options, or extension points built for needs that
+      do not exist yet.
+    recommendation: Remove generality that no current caller needs; add it back when a real need appears.
+    remedies:
+      - Replace the interface or base class that has a single implementation with the concrete type.
+      - Remove parameters and options that every caller passes the same way.
+      - Delete extension points, hooks, and registries that nothing uses.
+
+  - id: simplest-change
+    applies_to: [diff]
+    text: >-
+      The change reaches its goal with the simplest adequate approach and adds no complexity beyond what
+      the goal requires.
+    recommendation: Reduce the change to the simplest approach that achieves its goal.
+    remedies:
+      - Use an existing helper or pattern from the codebase instead of introducing a new mechanism.
+      - Drop new abstractions, layers, or options the change does not need.
+      - Implement the behavior where it is used rather than through a new indirection.
+
+  - id: readable-tests
+    applies_to: [file]
+    content: [test]
+    text: >-
+      Each test reads as a short, direct example: obvious setup, one behavior, and a clear expectation,
+      without elaborate helpers or indirection hiding what is checked.
+    recommendation: Make each test a direct, self-explanatory example of one behavior.
+    remedies:
+      - Inline test helpers that hide the setup or the expectation.
+      - Split tests that check several unrelated behaviors.
+      - Name each test after the behavior it checks.
+
+  - id: simple-configuration
+    applies_to: [file]
+    content: [config]
+    text: >-
+      The configuration states only what differs from sensible defaults, and its structure is flat
+      and easy to read.
+    recommendation: Trim the configuration to the settings that matter and flatten its structure.
+    remedies:
+      - Remove settings that restate defaults.
+      - Flatten nesting that adds no meaning.
+      - Group related settings and give them self-explanatory names.
+
+  - id: shallow-structure
+    applies_to: [directory]
+    text: >-
+      The directory layout is shallow and unsurprising; nesting and splitting exist only where they make
+      things easier to find.
+    recommendation: Flatten the layout where nesting does not help readers find things.
+    remedies:
+      - Merge single-file subdirectories into their parent.
+      - Collapse layers of nesting that only contain other directories.
+      - Use conventional names that a newcomer would expect.

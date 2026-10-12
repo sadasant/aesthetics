@@ -1,0 +1,118 @@
+id: unix
+name: Unix Philosophy
+foundation: The Unix philosophy (McIlroy, Thompson, Pike, Raymond)
+description: Focused responsibilities, simple interfaces, composability, and minimal mechanisms.
+references:
+  - https://en.wikipedia.org/wiki/Unix_philosophy
+  - http://www.catb.org/~esr/writings/taoup/html/ch01s06.html
+guidelines:
+  - id: do-one-thing
+    applies_to: [file]
+    content: [code]
+    exclude: &tests ["**/*_test.*", "**/*.test.*", "**/*.spec.*", "**/test_*", "**/test/**", "**/tests/**", "**/__tests__/**"]
+    text: The file has one focused responsibility, and everything in it serves that single purpose.
+    recommendation: Give each responsibility its own module so that this file does one thing well.
+    remedies:
+      - Extract the code that serves a different purpose into its own file or module with a name that states that purpose.
+      - Delete code that does not serve the file's main purpose.
+      - Rename the file so its name states the one responsibility it actually has.
+
+  - id: simple-interfaces
+    applies_to: [file]
+    content: [code]
+    exclude: *tests
+    text: >-
+      What the file exposes to other code is small and simple: few entry points, plain data in and out,
+      and no hidden coupling through global or shared mutable state.
+    recommendation: Narrow the exposed surface to what callers need and pass data explicitly.
+    remedies:
+      - Make helpers that callers do not need private.
+      - Replace hidden global or shared mutable state with explicit parameters and return values.
+      - Merge or remove redundant entry points so callers have one obvious way to use the module.
+
+  - id: composable
+    applies_to: [file, directory]
+    content: [code]
+    exclude: *tests
+    text: >-
+      Components can be combined with others: they take inputs and produce outputs instead of reaching
+      into their surroundings, and they make no assumptions about who calls them or what runs next.
+    recommendation: Turn implicit dependencies on the environment into explicit inputs and outputs.
+    remedies:
+      - Pass configuration, files, and collaborators in as arguments instead of reading them from fixed locations.
+      - Return results instead of printing, exiting, or writing to fixed destinations inside library code.
+      - Split the component where it mixes producing data with deciding what to do with it.
+
+  - id: minimal-mechanism
+    applies_to: [file, diff]
+    content: [code]
+    text: >-
+      The code uses the least mechanism that does the job; it adds no framework, layer, plugin system, or
+      configuration knob that the problem does not need.
+    recommendation: Remove mechanism that is not required by a present need.
+    remedies:
+      - Replace the framework or layer with a direct implementation of what is actually used.
+      - Remove configuration options and extension points that nothing uses.
+      - Inline indirection that has only one implementation and one caller.
+
+  - id: thin-entry-point
+    applies_to: [file]
+    match: ["main.*", "__main__.py", "**/cmd/**/*.go"]
+    content: [code]
+    text: >-
+      The entry point only starts the program: it reads input and configuration, wires components
+      together, and delegates, while the real work lives in reusable modules.
+    recommendation: Move logic out of the entry point into modules the entry point calls.
+    remedies:
+      - Move business logic from the entry point into a separate package or module and call it.
+      - Reduce the entry point to argument parsing, dependency construction, and a single call into the program.
+      - Make error handling and exit codes the entry point's only decision-making.
+
+  - id: deliberate-public-surface
+    applies_to: [file]
+    match: ["index.{ts,tsx,js,jsx,mjs,cjs}", "lib.rs", "mod.rs", "__init__.py", "mod.ts"]
+    text: >-
+      The module index exposes a deliberate, minimal public surface: it exports what callers need,
+      hides internals, and makes the module's boundary obvious.
+    recommendation: Export only the intended public API from the module index.
+    remedies:
+      - Stop re-exporting internal helpers and implementation types.
+      - Replace wildcard re-exports with an explicit list of public names.
+      - Move logic out of the index so it only declares the module's interface.
+
+  - id: manifest-interface
+    applies_to: [file]
+    match: ["package.json", "Cargo.toml", "pyproject.toml", "go.mod", "composer.json", "*.gemspec", "deno.json"]
+    text: >-
+      The package manifest is deliberate: it states the package's identity and public entry points, and
+      contains nothing accidental such as leftover scripts, development tools listed as runtime
+      dependencies, or install-time side effects.
+    recommendation: Make the manifest state the package's public interface explicitly and trim what it does not need.
+    remedies:
+      - Declare explicit entry points or exports instead of relying on implicit defaults.
+      - Remove dependencies, scripts, and fields that the package does not use.
+      - Move development-only dependencies out of the runtime dependency list.
+
+  - id: focused-directories
+    applies_to: [directory]
+    content: [code]
+    text: >-
+      The directory has one clear purpose that its name conveys: the files directly in it serve that purpose,
+      and a directory that only holds subdirectories groups them under a shared, conventional role, such as
+      cmd, internal, or packages.
+    recommendation: Regroup files so each directory has one purpose that its name states.
+    remedies:
+      - Move files that serve a different purpose to the directory where that purpose lives.
+      - Rename the directory to state the purpose its contents share.
+      - Split the directory into subdirectories that each have one purpose.
+
+  - id: clear-boundaries
+    applies_to: [repository]
+    text: >-
+      The repository is composed of focused components with narrow, clear boundaries; a reader can state
+      the purpose of each top-level component in one sentence.
+    recommendation: Reorganize the repository into focused components with explicit boundaries.
+    remedies:
+      - Split catch-all directories such as utils, common, or misc into components with stated purposes.
+      - Document each top-level component's purpose in a short README or package comment.
+      - Merge components whose boundaries are artificial and that always change together.
