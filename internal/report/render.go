@@ -32,9 +32,9 @@ type TextOptions struct {
 	Width   int  // wrap prose at this many columns; 0 means 100
 }
 
-// wrap breaks s into lines of at most width columns, each prefixed by
+// Wrap breaks s into lines of at most width columns, each prefixed by
 // indent, with first replacing indent on the first line.
-func wrap(s, first, indent string, width int) string {
+func Wrap(s, first, indent string, width int) string {
 	var b strings.Builder
 	line := first
 	empty := true
@@ -127,7 +127,7 @@ func WriteText(w io.Writer, r *Report, opt TextOptions) {
 			fmt.Fprintf(w, "  %s skipped: %s\n", c.amber("-"), a.Error)
 		}
 		for _, n := range a.Notes {
-			fmt.Fprintln(w, wrap(n, "  "+c.amber("note")+" ", "       ", opt.Width))
+			fmt.Fprintln(w, Wrap(n, "  "+c.amber("note")+" ", "       ", opt.Width))
 		}
 		if opt.Verbose && len(a.Facts) > 0 {
 			fmt.Fprintf(w, "  %s\n", c.dim("facts "+facts(a.Facts)))
@@ -157,8 +157,8 @@ func WriteText(w io.Writer, r *Report, opt TextOptions) {
 		return color(fmt.Sprintf("%d %s", n, label))
 	}
 	counts := []string{
-		fmt.Sprintf("%d artifacts", s.Artifacts),
-		fmt.Sprintf("%d criteria", s.Criteria),
+		plural(s.Artifacts, "artifact", "artifacts"),
+		plural(s.Criteria, "criterion", "criteria"),
 		tint(s.Pass, c.green, "passed"),
 		tint(s.Fail, c.red, "failed"),
 		tint(s.Indeterminate, c.amber, "indeterminate"),
@@ -202,10 +202,10 @@ func writeCriterion(w io.Writer, c painter, x Criterion, width int, opt TextOpti
 	}
 	fmt.Fprintf(w, "  %s %-*s  %s  %s\n", c.mark(x.Outcome), width, x.Guideline, sev, c.dim(prob(x.Probability)))
 	pad := "    "
-	fmt.Fprintln(w, wrap(x.Text, pad, pad, opt.Width))
+	fmt.Fprintln(w, Wrap(x.Text, pad, pad, opt.Width))
 	// Without a probability, the explanation says why there is no outcome.
 	if verbose || x.Probability == nil {
-		fmt.Fprintln(w, wrap(x.Explanation, pad, pad, opt.Width))
+		fmt.Fprintln(w, Wrap(x.Explanation, pad, pad, opt.Width))
 	}
 	if x.Error != "" {
 		fmt.Fprintf(w, "%s%s %s\n", pad, c.red("error"), x.Error)
@@ -215,7 +215,7 @@ func writeCriterion(w io.Writer, c painter, x Criterion, width int, opt TextOpti
 		if verbose && x.RecommendationBasis == "model" {
 			basis = c.dim(fmt.Sprintf(" (remedy chosen by the model, %s)", prob(x.RecommendationProbability)))
 		}
-		rec := wrap(x.Recommendation, pad+"→ ", pad+"  ", opt.Width)
+		rec := Wrap(x.Recommendation, pad+"→ ", pad+"  ", opt.Width)
 		fmt.Fprintf(w, "%s%s\n", strings.Replace(rec, "→", c.paint("36", "→"), 1), basis)
 	}
 	for _, e := range x.Evidence {
@@ -267,4 +267,11 @@ func facts(m map[string]any) string {
 		parts = append(parts, k+"="+string(b))
 	}
 	return strings.Join(parts, " ")
+}
+
+func plural(n int, one, many string) string {
+	if n == 1 {
+		return fmt.Sprintf("%d %s", n, one)
+	}
+	return fmt.Sprintf("%d %s", n, many)
 }

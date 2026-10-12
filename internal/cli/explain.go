@@ -172,6 +172,11 @@ func explainJSON(w io.Writer, s *session, a *artifact.Artifact, p *evaluate.Plan
 }
 
 func explainText(w io.Writer, s *session, a *artifact.Artifact, p *evaluate.Plan, limits decision.Info, providerErr error, showState bool, result *report.ArtifactResult, topt report.TextOptions) {
+	width := topt.Width
+	if width <= 0 {
+		width = 100
+	}
+	para := func(first, indent, text string) { fmt.Fprintln(w, report.Wrap(text, first, indent, width)) }
 	fmt.Fprintf(w, "Artifact: %s\n", a.Label())
 	details := []string{"kind: " + string(a.Kind)}
 	if a.Role != nil {
@@ -192,7 +197,8 @@ func explainText(w io.Writer, s *session, a *artifact.Artifact, p *evaluate.Plan
 	if a.Diff != nil {
 		details = append(details, fmt.Sprintf("diff: %s, %d files (+%d -%d)", a.Diff.Label, len(a.Diff.Files), a.Diff.Additions, a.Diff.Deletions))
 	}
-	fmt.Fprintf(w, "  %s\n\n", strings.Join(details, " · "))
+	para("  ", "  ", strings.Join(details, " · "))
+	fmt.Fprintln(w)
 
 	if s.cfg.Path != "" {
 		fmt.Fprintf(w, "Configuration: %s\n", s.cfg.Path)
@@ -202,8 +208,8 @@ func explainText(w io.Writer, s *session, a *artifact.Artifact, p *evaluate.Plan
 	if providerErr != nil {
 		fmt.Fprintf(w, "Provider: not configured (%v)\n", providerErr)
 	} else {
-		fmt.Fprintf(w, "Provider: %s · endpoint %s · up to %d characters of context and %d questions per request\n",
-			limits.Label(), orDash(limits.Endpoint), limits.MaxStateChars, limits.MaxQuestions)
+		para("", "  ", fmt.Sprintf("Provider: %s · endpoint %s · up to %d characters of context and %d questions per request",
+			limits.Label(), orDash(limits.Endpoint), limits.MaxStateChars, limits.MaxQuestions))
 	}
 	res := p.Resolution
 	fmt.Fprintf(w, "Layers applied (in order): %s\n", orDash(strings.Join(res.Layers, "; ")))
@@ -214,15 +220,15 @@ func explainText(w io.Writer, s *session, a *artifact.Artifact, p *evaluate.Plan
 	}
 	for _, g := range res.Applicable {
 		fmt.Fprintf(w, "  %d. %s · %s · priority %d\n", g.Rank, g.ID, g.Severity, g.Priority)
-		fmt.Fprintf(w, "     %s\n", g.Text)
-		fmt.Fprintf(w, "     from %s · introduced by %s · scope: %s\n", g.Origin(), strings.Join(g.Via, ", "), g.Scope.Describe())
+		para("     ", "     ", g.Text)
+		para("     ", "       ", fmt.Sprintf("from %s · introduced by %s · scope: %s", g.Origin(), strings.Join(g.Via, ", "), g.Scope.Describe()))
 		if g.Instructions != "" {
-			fmt.Fprintf(w, "     instructions: %s\n", g.Instructions)
+			para("     ", "       ", "instructions: "+g.Instructions)
 		}
 		if len(g.Overridden) > 0 {
 			fmt.Fprintf(w, "     specialized by: %s\n", strings.Join(g.Overridden, ", "))
 		}
-		fmt.Fprintf(w, "     on failure: %s\n", g.Recommendation)
+		para("     ", "       ", "on failure: "+g.Recommendation)
 		if len(g.Remedies) > 1 {
 			fmt.Fprintf(w, "     (the model picks the best of %d remedies)\n", len(g.Remedies))
 		}
