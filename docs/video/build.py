@@ -10,7 +10,9 @@ text-to-speech, and subtitles are timed from the generated audio.
 Requires: vhs and ttyd, ffmpeg with libass, Go, agent-browser (to render the
 cards), the Inter and JetBrains Mono fonts, and OPENAI_API_KEY.
 
-Outputs: docs/assets/intro.mp4, intro.srt, and intro-poster.png.
+Outputs: docs/assets/intro.mp4, intro.srt, and intro-poster.png. GitHub does
+not play repository videos, so the README links the video through jsDelivr;
+after pushing a new build, purge https://purge.jsdelivr.net/gh/sadasant/aesthetics@main/docs/assets/intro.mp4.
 """
 
 import hashlib
