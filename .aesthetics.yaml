@@ -1,0 +1,20 @@
+# Aesthetics evaluates itself with this configuration.
+version: 1
+
+provider:
+  type: openai
+  model: gpt-6-luna
+
+extends: [unix, kiss, readme]
+
+rules:
+  - match: "docs/**"
+    extends: [diataxis]
+  - match: docs/README.md
+    disable: [readme]   # an index page, judged as documentation
+
+files:
+  exclude: ["evals/cases/**", ".render/**"]   # labeled fixtures, deliberately good and bad
+
+ci:
+  fail_on: warning
