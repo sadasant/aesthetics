@@ -1,0 +1,162 @@
+# Standard Readme: purpose, installation, usage, orientation, structure.
+
+- id: readme-standard
+  kind: file
+  target: README.md
+  use: [readme]
+  files:
+    README.md: |
+      # slugify
+
+      Convert any string into a URL-safe slug. Useful for blog URLs, file names, and IDs that must stay readable.
+
+      ## Install
+
+      Requires Node.js 18 or newer.
+
+      ```sh
+      npm install @acme/slugify
+      ```
+
+      ## Usage
+
+      ```js
+      import { slugify } from "@acme/slugify";
+
+      slugify("Hello, World!"); // "hello-world"
+      ```
+
+      See the [API reference](docs/api.md) for all options.
+
+      ## Contributing
+
+      Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+      ## License
+
+      MIT © Acme
+  expect:
+    readme/states-purpose: pass
+    readme/installation: pass
+    readme/usage: pass
+    readme/orientation: pass
+    readme/conventional-structure: pass
+
+- id: readme-no-purpose
+  kind: file
+  target: README.md
+  use: [readme]
+  files:
+    README.md: |
+      [![build](https://img.shields.io/badge/build-passing-green)](#) [![npm](https://img.shields.io/badge/npm-v2-blue)](#)
+
+      ## Changelog
+
+      - 2.1.0: fixed edge case with emoji
+      - 2.0.0: dropped Node 14
+      - 1.9.0: performance
+
+      ## Notes
+
+      Remember to bump the version before publishing. Run the release script from the ops machine.
+  expect:
+    readme/states-purpose: fail
+    readme/installation: fail
+    readme/usage: fail
+    readme/conventional-structure: fail
+
+- id: readme-wall-of-text
+  kind: file
+  target: README.md
+  use: [readme]
+  files:
+    README.md: |
+      # dataflow
+
+      ## License
+      Apache-2.0
+
+      dataflow started in 2019 when our team needed something to move data between systems and we tried many tools, Airflow, Luigi, cron scripts, and some homegrown things, none of which quite fit, so over a long weekend I wrote the first prototype, which then grew, and today it handles thousands of jobs, although the architecture has changed many times, first a single process, then a queue, then workers, then back to a single process for small installs, which is why some of the code looks the way it does, and if you look at the history you will see the migration to the new scheduler which took most of 2021 and involved rewriting the storage layer twice.
+
+      ## Random tips
+      Set DATAFLOW_HOME. Sometimes restart helps.
+
+      ## Usage
+      Run it.
+  expect:
+    readme/conventional-structure: fail
+    readme/usage: fail
+    readme/orientation: fail
+
+- id: readme-nested-component
+  kind: file
+  target: packages/parser/README.md
+  use: [readme]
+  files:
+    packages/parser/README.md: |
+      # parser
+
+      Parses Markdown into a block tree for the rest of the monorepo. Internal package; not published.
+
+      ## Usage
+
+      ```ts
+      import { parse } from "@mdlint/parser";
+
+      const blocks = parse("# Title\n\nText");
+      ```
+
+      See the [repository README](../../README.md) for setup and contribution guidelines.
+  expect:
+    readme/states-purpose: pass
+    readme/usage: pass
+
+- id: readme-repository-present
+  kind: repository
+  use: [readme]
+  files:
+    README.md: |
+      # tinyq
+
+      A minimal persistent job queue for Go programs.
+
+      ## Install
+
+      ```sh
+      go get example.com/tinyq
+      ```
+
+      ## Usage
+
+      ```go
+      q, _ := tinyq.Open("jobs.db")
+      q.Push("send-email", payload)
+      ```
+    queue.go: "package tinyq\n"
+  expect:
+    readme/repository-has-readme: pass
+
+- id: readme-repository-missing
+  kind: repository
+  use: [readme]
+  files:
+    queue.go: "package tinyq\n"
+    store.go: "package tinyq\n"
+    go.mod: "module example.com/tinyq\n\ngo 1.22\n"
+  expect:
+    readme/repository-has-readme: fail
+
+- id: readme-terse-borderline
+  kind: file
+  target: README.md
+  use: [readme]
+  files:
+    README.md: |
+      # envcheck
+
+      Checks that required environment variables are set before your app starts.
+
+      `pip install envcheck`
+  expect:
+    readme/usage: borderline
+    readme/states-purpose: pass

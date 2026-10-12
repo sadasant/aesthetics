@@ -1,0 +1,289 @@
+# User-defined guidelines written in natural language, and diff attribution
+# (problems introduced by a change versus problems that predate it).
+
+- id: custom-error-messages-good
+  kind: file
+  target: config.go
+  guidelines:
+    - id: actionable-errors
+      text: Error messages say what failed and what the user can do about it.
+  files:
+    config.go: |
+      package config
+
+      import (
+      	"fmt"
+      	"os"
+      )
+
+      func Load(path string) ([]byte, error) {
+      	data, err := os.ReadFile(path)
+      	if os.IsNotExist(err) {
+      		return nil, fmt.Errorf("config file %s not found; create it with `app init` or pass --config", path)
+      	}
+      	if err != nil {
+      		return nil, fmt.Errorf("reading config file %s: %w", path, err)
+      	}
+      	if len(data) == 0 {
+      		return nil, fmt.Errorf("config file %s is empty; see `app init --help` for a template", path)
+      	}
+      	return data, nil
+      }
+  expect:
+    config/actionable-errors: pass
+
+- id: custom-error-messages-bad
+  kind: file
+  target: config.go
+  guidelines:
+    - id: actionable-errors
+      text: Error messages say what failed and what the user can do about it.
+  files:
+    config.go: |
+      package config
+
+      import (
+      	"errors"
+      	"os"
+      )
+
+      func Load(path string) ([]byte, error) {
+      	data, err := os.ReadFile(path)
+      	if err != nil {
+      		return nil, errors.New("error")
+      	}
+      	if len(data) == 0 {
+      		return nil, errors.New("something went wrong")
+      	}
+      	return data, nil
+      }
+  expect:
+    config/actionable-errors: fail
+
+- id: custom-comments-why
+  kind: file
+  target: retry.ts
+  guidelines:
+    - id: comments-explain-why
+      text: Comments explain why the code is the way it is, not what each line does.
+  files:
+    retry.ts: |
+      // The payment provider rate-limits bursts per account, so we back off
+      // exponentially instead of retrying immediately.
+      export async function withRetry<T>(fn: () => Promise<T>, attempts = 5): Promise<T> {
+        for (let i = 0; ; i++) {
+          try {
+            return await fn();
+          } catch (err) {
+            if (i + 1 >= attempts) throw err;
+            // Jitter avoids synchronized retries from many workers after an outage.
+            await new Promise((r) => setTimeout(r, 2 ** i * 100 + Math.random() * 100));
+          }
+        }
+      }
+  expect:
+    config/comments-explain-why: pass
+
+- id: custom-comments-what
+  kind: file
+  target: retry.ts
+  guidelines:
+    - id: comments-explain-why
+      text: Comments explain why the code is the way it is, not what each line does.
+  files:
+    retry.ts: |
+      // function withRetry
+      export async function withRetry<T>(fn: () => Promise<T>, attempts = 5): Promise<T> {
+        // loop forever
+        for (let i = 0; ; i++) {
+          // try
+          try {
+            // call fn and return
+            return await fn();
+          } catch (err) {
+            // if too many attempts, throw
+            if (i + 1 >= attempts) throw err;
+            // wait
+            await new Promise((r) => setTimeout(r, 2 ** i * 100 + Math.random() * 100));
+          }
+        }
+      }
+  expect:
+    config/comments-explain-why: fail
+
+- id: attribution-introduced-global-state
+  kind: diff
+  target: counter.go
+  use: [unix]
+  before:
+    counter.go: |
+      package counter
+
+      // Count returns how many items satisfy keep.
+      func Count[T any](items []T, keep func(T) bool) int {
+      	n := 0
+      	for _, it := range items {
+      		if keep(it) {
+      			n++
+      		}
+      	}
+      	return n
+      }
+  files:
+    counter.go: |
+      package counter
+
+      var LastCount int
+      var Debug bool
+
+      // Count returns how many items satisfy keep.
+      func Count[T any](items []T, keep func(T) bool) int {
+      	n := 0
+      	for _, it := range items {
+      		if keep(it) {
+      			n++
+      		}
+      	}
+      	LastCount = n
+      	if Debug {
+      		println("counted", n)
+      	}
+      	return n
+      }
+  expect:
+    unix/simple-interfaces: fail
+  attribution:
+    unix/simple-interfaces: introduced
+  evidence:
+    unix/simple-interfaces: [3, 4]
+
+- id: attribution-preexisting-global-state
+  kind: diff
+  target: counter.go
+  use: [unix]
+  before:
+    counter.go: |
+      package counter
+
+      var LastCount int
+      var Debug bool
+
+      // Count returns how many itmes satisfy keep.
+      func Count[T any](items []T, keep func(T) bool) int {
+      	n := 0
+      	for _, it := range items {
+      		if keep(it) {
+      			n++
+      		}
+      	}
+      	LastCount = n
+      	if Debug {
+      		println("counted", n)
+      	}
+      	return n
+      }
+  files:
+    counter.go: |
+      package counter
+
+      var LastCount int
+      var Debug bool
+
+      // Count returns how many items satisfy keep.
+      func Count[T any](items []T, keep func(T) bool) int {
+      	n := 0
+      	for _, it := range items {
+      		if keep(it) {
+      			n++
+      		}
+      	}
+      	LastCount = n
+      	if Debug {
+      		println("counted", n)
+      	}
+      	return n
+      }
+  expect:
+    unix/simple-interfaces: fail
+  attribution:
+    unix/simple-interfaces: preexisting
+
+- id: attribution-introduced-clever-code
+  kind: diff
+  target: stats.py
+  use: [kiss]
+  before:
+    stats.py: |
+      def average(values):
+          return sum(values) / len(values)
+  files:
+    stats.py: |
+      from functools import reduce
+
+
+      def average(values):
+          return sum(values) / len(values)
+
+
+      median = lambda v: (lambda o, m: o[m] if len(o) & 1 else sum(o[~-m:-~m]) / 2)(sorted(v), len(v) >> 1)
+  expect:
+    kiss/direct: fail
+  attribution:
+    kiss/direct: introduced
+
+- id: attribution-preexisting-clever-code
+  kind: diff
+  target: stats.py
+  use: [kiss]
+  before:
+    stats.py: |
+      from functools import reduce
+
+
+      def average(values):
+          return sum(values) / len(values)
+
+
+      median = lambda v: (lambda o, m: o[m] if len(o) & 1 else sum(o[~-m:-~m]) / 2)(sorted(v), len(v) >> 1)
+  files:
+    stats.py: |
+      from functools import reduce
+
+
+      def average(values):
+          """Return the arithmetic mean of values."""
+          return sum(values) / len(values)
+
+
+      median = lambda v: (lambda o, m: o[m] if len(o) & 1 else sum(o[~-m:-~m]) / 2)(sorted(v), len(v) >> 1)
+  expect:
+    kiss/direct: fail
+  attribution:
+    kiss/direct: preexisting
+
+- id: attribution-preexisting-god-class
+  kind: diff
+  target: src/UserManager.java
+  use: [solid]
+  before:
+    src/UserManager.java: |
+      public class UserManager {
+          public boolean validateEmail(String email) { return email.contains("@"); }
+          public void saveUser(String email) { /* JDBC insert */ }
+          public void sendWelcomeEmail(String email) { /* SMTP */ }
+          public String renderProfileHtml(String name) { return "<h1>" + name + "</h1>"; }
+          public void exportUsersToCsv(String path) { /* CSV */ }
+      }
+  files:
+    src/UserManager.java: |
+      public class UserManager {
+          public boolean validateEmail(String email) { return email != null && email.contains("@"); }
+          public void saveUser(String email) { /* JDBC insert */ }
+          public void sendWelcomeEmail(String email) { /* SMTP */ }
+          public String renderProfileHtml(String name) { return "<h1>" + name + "</h1>"; }
+          public void exportUsersToCsv(String path) { /* CSV */ }
+      }
+  expect:
+    solid/single-responsibility: fail
+  attribution:
+    solid/single-responsibility: preexisting

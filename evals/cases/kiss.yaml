@@ -1,0 +1,283 @@
+# Keep It Simple: directness, no speculative generality, simple changes,
+# readable tests, simple configuration, shallow structure.
+
+- id: kiss-direct-plain
+  kind: file
+  target: stats.py
+  use: [kiss]
+  files:
+    stats.py: |
+      def average(values):
+          """Return the arithmetic mean of a non-empty list of numbers."""
+          if not values:
+              raise ValueError("average of an empty list")
+          return sum(values) / len(values)
+
+
+      def median(values):
+          ordered = sorted(values)
+          middle = len(ordered) // 2
+          if len(ordered) % 2:
+              return ordered[middle]
+          return (ordered[middle - 1] + ordered[middle]) / 2
+  expect:
+    kiss/direct: pass
+    kiss/no-speculative-generality: pass
+
+- id: kiss-direct-clever
+  kind: file
+  target: stats.py
+  use: [kiss]
+  files:
+    stats.py: |
+      from functools import reduce
+      import operator as op
+
+      average = lambda v: (lambda s, n: s / n if n else (_ for _ in ()).throw(ValueError()))(*reduce(lambda a, x: (a[0] + x, a[1] + 1), v, (0, 0)))
+
+      median = lambda v: (lambda o, m: o[m] if len(o) & 1 else reduce(op.add, o[~-m:-~m]) / 2)(sorted(v), len(v) >> 1)
+
+      def is_even(n):
+          return not (n & 1) if n == n else is_even(int(n))
+  expect:
+    kiss/direct: fail
+  evidence:
+    kiss/direct: [4, 6]
+
+- id: kiss-speculative-generality
+  kind: file
+  target: src/main/java/com/acme/Greeting.java
+  use: [kiss]
+  files:
+    src/main/java/com/acme/Greeting.java: |
+      package com.acme;
+
+      import java.util.Map;
+      import java.util.Optional;
+
+      public interface GreetingStrategy {
+          String greet(String name, Map<String, Object> options);
+      }
+
+      abstract class AbstractGreetingStrategy implements GreetingStrategy {
+          protected Optional<String> localeOverride = Optional.empty();
+          protected boolean enableFutureEmojiSupport = false;
+      }
+
+      class DefaultGreetingStrategy extends AbstractGreetingStrategy {
+          public String greet(String name, Map<String, Object> options) {
+              return "Hello, " + name;
+          }
+      }
+
+      class GreetingStrategyFactoryProvider {
+          public static GreetingStrategyFactory getFactory(String kind) {
+              return new GreetingStrategyFactory();
+          }
+      }
+
+      class GreetingStrategyFactory {
+          public GreetingStrategy create(Map<String, Object> config) {
+              return new DefaultGreetingStrategy();
+          }
+      }
+
+      public class Greeting {
+          public static String hello(String name) {
+              return GreetingStrategyFactoryProvider.getFactory("default").create(Map.of()).greet(name, Map.of());
+          }
+      }
+  expect:
+    kiss/no-speculative-generality: fail
+    kiss/direct: fail
+
+- id: kiss-simplest-change-guard
+  kind: diff
+  use: [kiss]
+  before:
+    pricing.py: |
+      def discounted(price, percent):
+          return price * (1 - percent / 100)
+  files:
+    pricing.py: |
+      def discounted(price, percent):
+          if not 0 <= percent <= 100:
+              raise ValueError(f"discount must be between 0 and 100, got {percent}")
+          return price * (1 - percent / 100)
+  expect:
+    kiss/simplest-change: pass
+    kiss/no-speculative-generality: pass
+
+- id: kiss-simplest-change-overbuilt
+  kind: diff
+  use: [kiss]
+  before:
+    pricing.py: |
+      def discounted(price, percent):
+          return price * (1 - percent / 100)
+  files:
+    pricing.py: |
+      from abc import ABC, abstractmethod
+
+
+      class ValidationStrategy(ABC):
+          @abstractmethod
+          def validate(self, value, context=None): ...
+
+
+      class RangeValidationStrategy(ValidationStrategy):
+          def __init__(self, low, high, inclusive=True, on_error="raise", logger=None):
+              self.low, self.high, self.inclusive = low, high, inclusive
+              self.on_error, self.logger = on_error, logger
+
+          def validate(self, value, context=None):
+              ok = self.low <= value <= self.high if self.inclusive else self.low < value < self.high
+              if not ok and self.on_error == "raise":
+                  raise ValueError(value)
+              return ok
+
+
+      class ValidatorRegistry:
+          _validators = {}
+
+          @classmethod
+          def register(cls, name, strategy):
+              cls._validators[name] = strategy
+
+          @classmethod
+          def get(cls, name):
+              return cls._validators[name]
+
+
+      ValidatorRegistry.register("percent", RangeValidationStrategy(0, 100))
+
+
+      def discounted(price, percent, validator_name="percent", context=None):
+          ValidatorRegistry.get(validator_name).validate(percent, context)
+          return price * (1 - percent / 100)
+  expect:
+    kiss/simplest-change: fail
+    kiss/no-speculative-generality: fail
+
+- id: kiss-readable-tests
+  kind: file
+  target: slug/slug_test.go
+  use: [kiss]
+  files:
+    slug/slug_test.go: |
+      package slug
+
+      import "testing"
+
+      func TestMake(t *testing.T) {
+      	tests := []struct{ in, want string }{
+      		{"Hello, World!", "hello-world"},
+      		{"  Go 1.22  ", "go-1-22"},
+      		{"", ""},
+      	}
+      	for _, tt := range tests {
+      		if got := Make(tt.in); got != tt.want {
+      			t.Errorf("Make(%q) = %q, want %q", tt.in, got, tt.want)
+      		}
+      	}
+      }
+  expect:
+    kiss/readable-tests: pass
+
+- id: kiss-unreadable-tests
+  kind: file
+  target: tests/test_stuff.py
+  use: [kiss]
+  files:
+    tests/test_stuff.py: |
+      from helpers import build, run_scenario, assert_world
+
+
+      def make(kind, **kw):
+          return build(kind, **{**DEFAULTS[kind], **kw})
+
+
+      DEFAULTS = {"user": {"active": True}, "order": {"items": 3}, "cart": {}}
+
+
+      def test_stuff():
+          w = run_scenario([make("user"), make("order", items=0), make("cart")], steps=7, seed=42)
+          assert_world(w, lambda s: s[3][1]["state"] == "x" and len(s[-2]) == 4)
+          w2 = run_scenario([make("user", active=False)], steps=2)
+          assert_world(w2, lambda s: not s[0][0])
+          assert sum(map(len, w.history)) > 9
+          assert w2.flags & 0b101
+  expect:
+    kiss/readable-tests: fail
+
+- id: kiss-config-simple
+  kind: file
+  target: tsconfig.json
+  use: [kiss]
+  files:
+    tsconfig.json: |
+      {
+        "compilerOptions": {
+          "target": "ES2022",
+          "module": "NodeNext",
+          "strict": true,
+          "outDir": "dist"
+        },
+        "include": ["src"]
+      }
+  expect:
+    kiss/simple-configuration: pass
+
+- id: kiss-config-convoluted
+  kind: file
+  target: config/app.yaml
+  use: [kiss]
+  files:
+    config/app.yaml: |
+      app:
+        settings:
+          values:
+            server:
+              config:
+                network:
+                  http:
+                    port:
+                      value: 8080
+                      default: 8080
+                      enabled: true
+          more_values:
+            logging:
+              config:
+                level:
+                  value: info
+                  default: info
+            feature_flags:
+              flags:
+                flag_a: { enabled: false, default: false }
+                flag_b: { enabled: false, default: false }
+                flag_c: { enabled: false, default: false }
+  expect:
+    kiss/simple-configuration: fail
+
+- id: kiss-structure-shallow
+  kind: directory
+  target: pkg
+  use: [kiss]
+  files:
+    pkg/parse.go: "package pkg\n"
+    pkg/render.go: "package pkg\n"
+    pkg/parse_test.go: "package pkg\n"
+    pkg/README.md: "# pkg\n\nParses and renders templates.\n"
+  expect:
+    kiss/shallow-structure: pass
+
+- id: kiss-structure-deep
+  kind: directory
+  target: src
+  use: [kiss]
+  files:
+    src/main/java/com/acme/core/impl/default/v1/Service.java: "class Service {}\n"
+    src/main/java/com/acme/core/api/v1/model/dto/UserDto.java: "class UserDto {}\n"
+    src/main/java/com/acme/util/helpers/common/shared/Strings.java: "class Strings {}\n"
+  expect:
+    kiss/shallow-structure: fail

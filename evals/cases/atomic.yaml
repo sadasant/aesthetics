@@ -1,0 +1,241 @@
+# Atomic changes: one purpose, no unrelated edits, self-contained,
+# consistent with the surrounding code, reviewable.
+
+- id: atomic-focused-fix
+  kind: diff
+  use: [atomic]
+  before:
+    cart.py: |
+      def total(items):
+          return sum(item["price"] for item in items)
+    test_cart.py: |
+      from cart import total
+
+
+      def test_total():
+          assert total([{"price": 2}, {"price": 3}]) == 5
+  files:
+    cart.py: |
+      def total(items):
+          return sum(item["price"] * item.get("quantity", 1) for item in items)
+    test_cart.py: |
+      from cart import total
+
+
+      def test_total():
+          assert total([{"price": 2}, {"price": 3}]) == 5
+
+
+      def test_total_counts_quantity():
+          assert total([{"price": 2, "quantity": 3}]) == 6
+  expect:
+    atomic/single-purpose: pass
+    atomic/no-unrelated-modifications: pass
+    atomic/self-contained: pass
+    atomic/consistent-with-surroundings: pass
+    atomic/reviewable: pass
+
+- id: atomic-mixed-purposes
+  kind: diff
+  use: [atomic]
+  before:
+    cart.py: |
+      def total(items):
+          return sum(item["price"] for item in items)
+    users.py: |
+      def full_name(u):
+          return u["first"] + " " + u["last"]
+    README.md: |
+      # Shop
+
+      A tiny shop.
+  files:
+    cart.py: |
+      def total(items):
+          return sum(item["price"] * item.get("quantity", 1) for item in items)
+
+
+      def apply_coupon(total, code):
+          return total * 0.9 if code == "SAVE10" else total
+    users.py: |
+      def display_name(user):
+          return f'{user["first"]} {user["last"]}'.strip()
+
+
+      def is_admin(user):
+          return user.get("role") == "admin"
+    README.md: |
+      # Shop
+
+      A tiny shop. Now with coupons, admin roles, and quantity support!
+  expect:
+    atomic/single-purpose: fail
+    atomic/no-unrelated-modifications: fail
+    atomic/reviewable: fail
+
+- id: atomic-drive-by-reformat
+  kind: diff
+  use: [atomic]
+  before:
+    server.js: |
+      const express = require('express')
+      const app = express()
+
+      app.get('/health', (req, res) => res.send('ok'))
+
+      app.listen(3000)
+    db.js: |
+      const { Pool } = require('pg')
+      const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+      module.exports = { query: (text, params) => pool.query(text, params) }
+  files:
+    server.js: |
+      const express = require('express')
+      const app = express()
+
+      app.get('/health', (req, res) => res.send('ok'))
+      app.get('/version', (req, res) => res.send(process.env.APP_VERSION || 'dev'))
+
+      app.listen(3000)
+    db.js: |
+      const { Pool } = require("pg");
+
+      const pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+      });
+
+      module.exports = {
+        query: (sql, values) => pool.query(sql, values),
+      };
+  expect:
+    atomic/no-unrelated-modifications: fail
+    atomic/single-purpose: borderline
+
+- id: atomic-leftovers
+  kind: diff
+  use: [atomic]
+  before:
+    report.go: |
+      package report
+
+      func Total(xs []int) int {
+      	t := 0
+      	for _, x := range xs {
+      		t += x
+      	}
+      	return t
+      }
+  files:
+    report.go: |
+      package report
+
+      import "fmt"
+
+      func Total(xs []int) int {
+      	t := 0
+      	for _, x := range xs {
+      		fmt.Println("DEBUG x =", x) // TODO remove
+      		t += x
+      	}
+      	// old implementation:
+      	// for i := 0; i < len(xs); i++ { t += xs[i] }
+      	return t
+      }
+
+      // Average is new. TODO: tests, handle empty input
+      func Average(xs []int) int {
+      	return Total(xs) / len(xs)
+      }
+  expect:
+    atomic/self-contained: fail
+
+- id: atomic-inconsistent-style
+  kind: diff
+  use: [atomic]
+  before:
+    inventory.py: |
+      class Inventory:
+          def __init__(self):
+              self._items = {}
+
+          def add_item(self, name, count=1):
+              if count <= 0:
+                  raise ValueError("count must be positive")
+              self._items[name] = self._items.get(name, 0) + count
+
+          def remove_item(self, name, count=1):
+              if self._items.get(name, 0) < count:
+                  raise ValueError(f"not enough {name}")
+              self._items[name] -= count
+  files:
+    inventory.py: |
+      class Inventory:
+          def __init__(self):
+              self._items = {}
+
+          def add_item(self, name, count=1):
+              if count <= 0:
+                  raise ValueError("count must be positive")
+              self._items[name] = self._items.get(name, 0) + count
+
+          def remove_item(self, name, count=1):
+              if self._items.get(name, 0) < count:
+                  raise ValueError(f"not enough {name}")
+              self._items[name] -= count
+
+          def GetItemCountOrMinusOne(self, ItemName):
+              try:
+                  return self._items[ItemName]
+              except:
+                  print("ERROR!!!")
+                  return -1
+  expect:
+    atomic/consistent-with-surroundings: fail
+
+- id: atomic-sprawling-change
+  kind: diff
+  use: [atomic]
+  before:
+    app.py: |
+      def main():
+          print("hello")
+  files:
+    app.py: |
+      import argparse
+      import json
+      import logging
+      import sqlite3
+
+
+      def main():
+          parser = argparse.ArgumentParser()
+          parser.add_argument("--export", action="store_true")
+          parser.add_argument("--import-file")
+          parser.add_argument("--verbose", action="store_true")
+          args = parser.parse_args()
+          logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
+          db = sqlite3.connect("app.db")
+          db.execute("CREATE TABLE IF NOT EXISTS notes (id INTEGER PRIMARY KEY, body TEXT)")
+          if args.import_file:
+              with open(args.import_file) as f:
+                  for note in json.load(f):
+                      db.execute("INSERT INTO notes (body) VALUES (?)", (note,))
+              db.commit()
+          if args.export:
+              print(json.dumps([r[0] for r in db.execute("SELECT body FROM notes")]))
+    themes.py: |
+      THEMES = {"dark": {"bg": "#000", "fg": "#fff"}, "light": {"bg": "#fff", "fg": "#000"}}
+
+
+      def theme(name):
+          return THEMES.get(name, THEMES["light"])
+    telemetry.py: |
+      import time
+      import urllib.request
+
+
+      def ping(event):
+          urllib.request.urlopen(f"https://telemetry.example.com/e?name={event}&t={time.time()}")
+  expect:
+    atomic/reviewable: fail
+    atomic/single-purpose: fail

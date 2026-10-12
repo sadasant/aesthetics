@@ -1,0 +1,149 @@
+# Diátaxis: one mode per document, mode conventions, signposting,
+# documentation organized by mode.
+
+- id: diataxis-howto-pure
+  kind: file
+  target: docs/how-to/rotate-keys.md
+  use: [diataxis]
+  files:
+    docs/how-to/rotate-keys.md: |
+      # How to rotate API keys
+
+      Use this guide when a key may have leaked or is due for rotation.
+
+      1. Create a new key: `acme keys create --name prod-2026`.
+      2. Deploy it: `acme secrets set API_KEY <new key>`.
+      3. Confirm traffic uses the new key: `acme keys usage prod-2026` shows requests.
+      4. Revoke the old key: `acme keys revoke prod-2025`.
+  expect:
+    diataxis/one-mode: pass
+    diataxis/mode-conventions: pass
+    diataxis/mode-signposted: pass
+
+- id: diataxis-mixed-modes
+  kind: file
+  target: docs/keys.md
+  use: [diataxis]
+  files:
+    docs/keys.md: |
+      # Keys
+
+      ## Why keys exist
+
+      In the early days of distributed systems, shared secrets were the norm. Public-key
+      cryptography changed that, and our design borrows from both traditions. We chose
+      symmetric keys for speed, which some argue is a mistake; the trade-offs are subtle.
+
+      ## Let's build your first integration!
+
+      First, install the CLI. Great! Now open a terminal and type `acme login`. You should
+      see a welcome message. Now let's create a key together...
+
+      ## Options
+
+      | Flag | Type | Default | Description |
+      | --- | --- | --- | --- |
+      | --name | string | none | Key name |
+      | --ttl | duration | 90d | Lifetime |
+      | --scope | list | all | Permissions |
+
+      ## Rotating keys in production
+
+      1. Create a new key. 2. Deploy it. 3. Revoke the old key.
+  expect:
+    diataxis/one-mode: fail
+
+- id: diataxis-tutorial-digressing
+  kind: file
+  target: docs/tutorials/first-plugin.md
+  use: [diataxis]
+  files:
+    docs/tutorials/first-plugin.md: |
+      # Tutorial: your first plugin
+
+      Plugins are an interesting topic. There are several plugin architectures: in-process,
+      out-of-process, and WebAssembly-based ones, each with trade-offs worth discussing at
+      length. Historically we used in-process plugins, then moved away from them for safety.
+
+      You could write your plugin in Go, Rust, or TypeScript; each has pros and cons. You
+      might also want to consider whether you need a plugin at all.
+
+      There are many configuration options you may eventually care about, such as timeouts,
+      memory limits, and capability grants, which we will not cover here.
+
+      That's the gist of plugins. Good luck!
+  expect:
+    diataxis/mode-conventions: fail
+    diataxis/one-mode: fail
+
+- id: diataxis-reference-consistent
+  kind: file
+  target: docs/reference/cli.md
+  use: [diataxis]
+  files:
+    docs/reference/cli.md: |
+      # CLI reference
+
+      ## acme keys create
+
+      Creates an API key.
+
+      | Flag | Type | Default | Description |
+      | --- | --- | --- | --- |
+      | `--name` | string | required | Name shown in the dashboard |
+      | `--ttl` | duration | `90d` | Time until the key expires |
+
+      ## acme keys revoke
+
+      Revokes an API key immediately.
+
+      | Argument | Type | Description |
+      | --- | --- | --- |
+      | `NAME` | string | Name of the key to revoke |
+  expect:
+    diataxis/one-mode: pass
+    diataxis/mode-conventions: pass
+
+- id: diataxis-title-vague
+  kind: file
+  target: docs/notes.md
+  use: [diataxis]
+  files:
+    docs/notes.md: |
+      # Notes
+
+      some stuff about deploys
+
+      - staging first
+      - check the dashboard
+      - the old cluster is weird
+  expect:
+    diataxis/mode-signposted: fail
+
+- id: diataxis-docs-organized
+  kind: directory
+  target: docs
+  use: [diataxis]
+  files:
+    docs/index.md: "# Documentation\n\nStart with the tutorials; use how-to guides for tasks; look things up in the reference; read explanations to understand the design.\n"
+    docs/tutorials/getting-started.md: "# Tutorial: getting started\n"
+    docs/how-to/rotate-keys.md: "# How to rotate keys\n"
+    docs/how-to/configure-sso.md: "# How to configure SSO\n"
+    docs/reference/cli.md: "# CLI reference\n"
+    docs/reference/config.md: "# Configuration reference\n"
+    docs/explanation/architecture.md: "# Architecture and design decisions\n"
+  expect:
+    diataxis/organized-by-mode: pass
+
+- id: diataxis-docs-disorganized
+  kind: directory
+  target: docs
+  use: [diataxis]
+  files:
+    docs/notes.md: "# Notes\n\nMisc.\n"
+    docs/stuff.md: "# Stuff\n\nThings about the API and also how to install.\n"
+    docs/faq-old.md: "# FAQ (old)\n"
+    docs/misc1.md: "# Misc\n"
+    docs/new-docs-draft.md: "# Draft\n"
+  expect:
+    diataxis/organized-by-mode: fail

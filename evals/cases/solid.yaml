@@ -1,0 +1,292 @@
+# SOLID: single responsibility, open/closed, substitutability, interface
+# segregation, dependency inversion, cohesive packages.
+
+- id: solid-srp-focused
+  kind: file
+  target: src/PasswordHasher.ts
+  use: [solid]
+  files:
+    src/PasswordHasher.ts: |
+      import { scrypt, randomBytes, timingSafeEqual } from "node:crypto";
+      import { promisify } from "node:util";
+
+      const scryptAsync = promisify(scrypt);
+
+      /** Hashes and verifies passwords with scrypt. */
+      export class PasswordHasher {
+        async hash(password: string): Promise<string> {
+          const salt = randomBytes(16);
+          const key = (await scryptAsync(password, salt, 32)) as Buffer;
+          return `${salt.toString("hex")}:${key.toString("hex")}`;
+        }
+
+        async verify(password: string, stored: string): Promise<boolean> {
+          const [salt, key] = stored.split(":").map((h) => Buffer.from(h, "hex"));
+          const candidate = (await scryptAsync(password, salt, 32)) as Buffer;
+          return timingSafeEqual(key, candidate);
+        }
+      }
+  expect:
+    solid/single-responsibility: pass
+    solid/depend-on-abstractions: borderline
+
+- id: solid-srp-god-class
+  kind: file
+  target: src/UserManager.java
+  use: [solid]
+  files:
+    src/UserManager.java: |
+      import java.sql.*;
+      import javax.mail.*;
+
+      public class UserManager {
+          private Connection db;
+
+          public boolean validateEmail(String email) {
+              return email.contains("@") && email.indexOf('.') > email.indexOf('@');
+          }
+
+          public void saveUser(String email, String name) throws SQLException {
+              PreparedStatement s = db.prepareStatement("INSERT INTO users VALUES (?, ?)");
+              s.setString(1, email);
+              s.setString(2, name);
+              s.execute();
+          }
+
+          public void sendWelcomeEmail(String email) throws MessagingException {
+              Transport.send(new MimeMessage((Session) null));
+          }
+
+          public String renderProfileHtml(String name) {
+              return "<div class='profile'><h1>" + name + "</h1></div>";
+          }
+
+          public double computeLoyaltyDiscount(int orders) {
+              return orders > 10 ? 0.15 : 0.0;
+          }
+
+          public void exportUsersToCsv(String path) { /* writes a CSV report */ }
+      }
+  expect:
+    solid/single-responsibility: fail
+
+- id: solid-open-closed-switch
+  kind: file
+  target: shapes.py
+  use: [solid]
+  files:
+    shapes.py: |
+      import math
+
+
+      def area(shape):
+          if shape["kind"] == "circle":
+              return math.pi * shape["r"] ** 2
+          elif shape["kind"] == "square":
+              return shape["side"] ** 2
+          elif shape["kind"] == "rectangle":
+              return shape["w"] * shape["h"]
+          elif shape["kind"] == "triangle":
+              return shape["b"] * shape["h"] / 2
+          elif shape["kind"] == "hexagon":
+              return 3 * math.sqrt(3) / 2 * shape["side"] ** 2
+          raise ValueError(shape["kind"])
+
+
+      def perimeter(shape):
+          if shape["kind"] == "circle":
+              return 2 * math.pi * shape["r"]
+          elif shape["kind"] == "square":
+              return 4 * shape["side"]
+          elif shape["kind"] == "rectangle":
+              return 2 * (shape["w"] + shape["h"])
+          elif shape["kind"] == "triangle":
+              return shape["a"] + shape["b"] + shape["c"]
+          raise ValueError(shape["kind"])
+
+
+      def draw(shape, canvas):
+          if shape["kind"] == "circle":
+              canvas.circle(shape["r"])
+          elif shape["kind"] == "square":
+              canvas.rect(shape["side"], shape["side"])
+          elif shape["kind"] == "rectangle":
+              canvas.rect(shape["w"], shape["h"])
+  expect:
+    solid/open-closed: fail
+
+- id: solid-open-closed-polymorphic
+  kind: file
+  target: shapes.go
+  use: [solid]
+  files:
+    shapes.go: |
+      package shapes
+
+      import "math"
+
+      // Shape is anything with an area and a perimeter.
+      type Shape interface {
+      	Area() float64
+      	Perimeter() float64
+      }
+
+      type Circle struct{ R float64 }
+
+      func (c Circle) Area() float64      { return math.Pi * c.R * c.R }
+      func (c Circle) Perimeter() float64 { return 2 * math.Pi * c.R }
+
+      type Rect struct{ W, H float64 }
+
+      func (r Rect) Area() float64      { return r.W * r.H }
+      func (r Rect) Perimeter() float64 { return 2 * (r.W + r.H) }
+
+      // Total sums the areas of any shapes.
+      func Total(shapes []Shape) float64 {
+      	t := 0.0
+      	for _, s := range shapes {
+      		t += s.Area()
+      	}
+      	return t
+      }
+  expect:
+    solid/open-closed: pass
+    solid/substitutable: pass
+    solid/interface-segregation: pass
+
+- id: solid-substitution-violated
+  kind: file
+  target: src/Collections.java
+  use: [solid]
+  files:
+    src/Collections.java: |
+      import java.util.ArrayList;
+      import java.util.List;
+
+      interface Store<T> {
+          /** Adds item; afterwards size() has grown by one. */
+          void add(T item);
+          int size();
+      }
+
+      class ListStore<T> implements Store<T> {
+          private final List<T> items = new ArrayList<>();
+          public void add(T item) { items.add(item); }
+          public int size() { return items.size(); }
+      }
+
+      class ReadOnlyStore<T> implements Store<T> {
+          private final List<T> items;
+          ReadOnlyStore(List<T> items) { this.items = items; }
+          public void add(T item) { throw new UnsupportedOperationException("read-only"); }
+          public int size() { return items.size(); }
+      }
+
+      class SamplingStore<T> implements Store<T> {
+          private final List<T> items = new ArrayList<>();
+          public void add(T item) {
+              if (Math.random() < 0.5) return; // silently drops half the items
+              items.add(item);
+          }
+          public int size() { return items.size(); }
+      }
+  expect:
+    solid/substitutable: fail
+
+- id: solid-fat-interface
+  kind: file
+  target: worker.go
+  use: [solid]
+  files:
+    worker.go: |
+      package jobs
+
+      // Worker is implemented by every component that touches jobs.
+      type Worker interface {
+      	Start() error
+      	Stop() error
+      	Enqueue(job Job) error
+      	Dequeue() (Job, error)
+      	Retry(id string) error
+      	Metrics() map[string]float64
+      	RenderDashboard() string
+      	SendAlertEmail(to string) error
+      	MigrateSchema() error
+      	ExportCSV(path string) error
+      	RotateLogs() error
+      	ReloadConfig(path string) error
+      }
+
+      type Job struct{ ID string }
+
+      // CSVExporter only exports, but must implement everything.
+      type CSVExporter struct{}
+
+      func (CSVExporter) ExportCSV(path string) error          { return nil }
+      func (CSVExporter) Start() error                         { panic("not supported") }
+      func (CSVExporter) Stop() error                          { panic("not supported") }
+      func (CSVExporter) Enqueue(Job) error                    { panic("not supported") }
+      func (CSVExporter) Dequeue() (Job, error)                { panic("not supported") }
+      func (CSVExporter) Retry(string) error                   { panic("not supported") }
+      func (CSVExporter) Metrics() map[string]float64          { panic("not supported") }
+      func (CSVExporter) RenderDashboard() string              { panic("not supported") }
+      func (CSVExporter) SendAlertEmail(string) error          { panic("not supported") }
+      func (CSVExporter) MigrateSchema() error                 { panic("not supported") }
+      func (CSVExporter) RotateLogs() error                    { panic("not supported") }
+      func (CSVExporter) ReloadConfig(string) error            { panic("not supported") }
+  expect:
+    solid/interface-segregation: fail
+    solid/substitutable: fail
+
+- id: solid-dependency-injected
+  kind: file
+  target: billing/service.go
+  use: [solid]
+  files:
+    billing/service.go: |
+      package billing
+
+      import "context"
+
+      // Charger moves money; implementations wrap payment providers.
+      type Charger interface {
+      	Charge(ctx context.Context, customer string, cents int64) error
+      }
+
+      // Service bills customers for their usage.
+      type Service struct {
+      	charger Charger
+      }
+
+      func NewService(c Charger) *Service { return &Service{charger: c} }
+
+      func (s *Service) BillUsage(ctx context.Context, customer string, units int64) error {
+      	return s.charger.Charge(ctx, customer, units*25)
+      }
+  expect:
+    solid/depend-on-abstractions: pass
+    solid/single-responsibility: pass
+
+- id: solid-dependency-hardwired
+  kind: file
+  target: billing/service.py
+  use: [solid]
+  files:
+    billing/service.py: |
+      import stripe
+      import psycopg2
+
+
+      class BillingService:
+          def bill_usage(self, customer_id, units):
+              conn = psycopg2.connect(host="prod-db.internal", user="billing", password="hunter2")
+              cur = conn.cursor()
+              cur.execute("SELECT stripe_id FROM customers WHERE id = %s", (customer_id,))
+              stripe_id = cur.fetchone()[0]
+              stripe.api_key = "sk_live_123"
+              stripe.Charge.create(customer=stripe_id, amount=units * 25, currency="usd")
+              cur.execute("INSERT INTO invoices (customer_id, units) VALUES (%s, %s)", (customer_id, units))
+              conn.commit()
+  expect:
+    solid/depend-on-abstractions: fail
+    solid/single-responsibility: fail
