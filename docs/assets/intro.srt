@@ -1,0 +1,68 @@
+1
+00:00:00,500 --> 00:00:03,400
+Linters check what a program can decide.
+
+2
+00:00:03,600 --> 00:00:08,400
+Aesthetics checks what takes judgment: clarity, simplicity, and coherence.
+
+3
+00:00:09,934 --> 00:00:12,584
+Install it with a single command.
+
+4
+00:00:12,784 --> 00:00:17,684
+It's one small binary, for macOS, Linux, and Windows.
+
+5
+00:00:19,568 --> 00:00:25,418
+In your project, run aesthetics init, and pick the schools of thought you care about.
+
+6
+00:00:25,618 --> 00:00:29,018
+Here, the Unix philosophy, and Keep It Simple.
+
+7
+00:00:29,218 --> 00:00:35,468
+It works with OpenAI, Cloudflare, TypeSafe, or a model you host yourself.
+
+8
+00:00:35,668 --> 00:00:40,518
+And your own guidelines live right beside them, written in plain language.
+
+9
+00:00:41,735 --> 00:00:44,035
+Then run aesthetics check.
+
+10
+00:00:44,235 --> 00:00:50,035
+A decision model judges every guideline, and reports pass, fail, or indeterminate.
+
+11
+00:00:50,235 --> 00:00:57,035
+This entry point does too much. Each failure comes with a recommendation, and the lines that show the problem.
+
+12
+00:00:58,702 --> 00:01:02,902
+To see why a guideline applies, ask aesthetics explain.
+
+13
+00:01:03,102 --> 00:01:09,302
+It lists every guideline for the file, in order of precedence, and where each one came from.
+
+14
+00:01:10,536 --> 00:01:13,786
+In CI, check only what changed.
+
+15
+00:01:13,986 --> 00:01:21,286
+Every failure is marked as introduced by the change, or preexisting, so old problems never block new work.
+
+16
+00:01:23,036 --> 00:01:26,286
+Aesthetics: make your taste explicit.
+
+17
+00:01:26,486 --> 00:01:28,786
+It's open source, on GitHub.
+

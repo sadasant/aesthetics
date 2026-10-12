@@ -21,7 +21,8 @@ Linters check what a program can decide. **Aesthetics checks what takes judgment
 You write guidelines in plain language, or adopt a school of thought such as `unix`, `kiss`, or `diataxis`. You decide where each one applies. A decision model judges every guideline and reports **pass**, **fail**, or **indeterminate**. Every failure comes with a recommendation and, where it can, the lines that show the problem.
 
 <p align="center">
-  <img alt="aesthetics check reporting four failures in a Go entry point, each with a recommendation and the lines involved" src="docs/assets/demo.svg" width="760">
+  <a href="docs/assets/intro.mp4"><img alt="Watch the intro video: install Aesthetics and run a first check in 90 seconds" src="docs/assets/intro-poster.png" width="760"></a><br>
+  <sub>A 90-second narrated intro with subtitles · <a href="docs/assets/intro.srt">transcript</a></sub>
 </p>
 
 ## Install

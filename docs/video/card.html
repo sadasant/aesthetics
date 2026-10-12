@@ -1,0 +1,53 @@
+<!doctype html>
+<!-- Cards for the intro video, its README poster, and the repository's
+     social preview. build.py renders it with ?kind=title|outro|poster|social. -->
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono&display=block">
+<style>
+  html, body { margin: 0; height: 100%; background: #0b0e14; color: #e6edf3; overflow: hidden; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center;
+         font-family: "Inter", sans-serif; text-align: center; }
+  img.logo { width: 46vw; }
+  .tagline { font-family: "Inter"; font-weight: 600; font-size: 3.2vw; margin-top: 4.5vh; letter-spacing: -0.01em; }
+  .sub { font-weight: 400; font-size: 1.9vw; color: #9da7b3; margin-top: 1.6vh; }
+  .url { position: absolute; bottom: 7vh; font-family: "JetBrains Mono"; font-size: 1.5vw; color: #f0883e; }
+  .play { margin-top: 5.5vh; display: flex; align-items: center; gap: 1.2vw; font-size: 1.7vw; color: #e6edf3;
+          border: 2px solid #30363d; border-radius: 999px; padding: 1.4vh 2.4vw 1.4vh 1.6vw; background: #161b22; }
+  .play svg { width: 2.6vw; height: 2.6vw; }
+  .hidden { display: none; }
+  body.poster { background-size: cover; background-position: top center; justify-content: flex-end; }
+  body.poster .play { margin: 0 0 4.2vh; font-size: 2vw; }
+</style>
+</head>
+<body>
+  <img class="logo" src="../assets/logo-dark.svg" alt="aesthetics">
+  <div class="tagline" id="tagline">Make taste explicit.</div>
+  <div class="sub" id="sub">Evaluate code, documentation, and changes against the qualities you care about.</div>
+  <div class="play hidden" id="play">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="#f0883e"/><path d="M9.5 7.5v9l7-4.5z" fill="#0b0e14"/></svg>
+    <span id="label">Watch the intro: install and first check in 90 seconds</span>
+  </div>
+  <div class="url" id="url">github.com/sadasant/aesthetics</div>
+  <script>
+    const kind = new URLSearchParams(location.search).get("kind") || "title";
+    const show = (id, on) => document.getElementById(id).classList.toggle("hidden", !on);
+    if (kind === "title") { show("url", false); }
+    if (kind === "outro") {
+      document.getElementById("sub").textContent = "Install it, choose your schools of thought, and check your next change.";
+      // Keep the URL clear of the subtitles at the bottom of the frame.
+      Object.assign(document.getElementById("url").style, { position: "static", marginTop: "5vh" });
+    }
+    if (kind === "poster") {
+      // A frame of the video with a play button in the subtitle band.
+      const frame = new URLSearchParams(location.search).get("frame");
+      document.body.classList.add("poster");
+      document.body.style.backgroundImage = `url("${frame}")`;
+      for (const id of ["tagline", "sub", "url"]) show(id, false);
+      document.querySelector("img.logo").classList.add("hidden");
+      show("play", true);
+    }
+  </script>
+</body>
+</html>
