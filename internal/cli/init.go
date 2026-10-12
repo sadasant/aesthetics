@@ -14,7 +14,7 @@ import (
 	"github.com/sadasant/aesthetics/internal/guideline"
 )
 
-const initTemplate = `# Aesthetics configuration. See README.md for the full reference.
+const initTemplate = `# Aesthetics configuration: https://github.com/sadasant/aesthetics/blob/main/docs/reference/configuration.md
 version: 1
 
 # Decision model used for evaluations. Credentials are read from the
