@@ -80,4 +80,23 @@ Remaining misjudgments:
 
 None of these is a false fail.
 
-Cloudflare Clef and Clef-flash: not yet measured; see the provider table in the main README for configuration.
+## Providers compared
+
+The same 104 judgments with the default thresholds, October 2026:
+
+| | OpenAI `gpt-6-luna` | Cloudflare `clef` | Cloudflare `clef-flash` |
+| --- | --- | --- | --- |
+| Correct on clear cases | 97% | **98%** | 79% |
+| False fail | 0 | 0 | 3 |
+| Missed fail | 1 | 0 | 3 |
+| Indeterminate on clear cases | 2% | 2% | 15% |
+| AUC | 1.00 | 1.00 | 0.96 |
+| Attribution correct | 5 of 5 | 5 of 5 | 4 of 4 |
+| Evidence on the flaw | 3 of 4 | 0 of 4 | 1 of 4 |
+| Input tokens per run | ~78,000 | ~70,000 | ~65,000 |
+| Repeat runs identical | yes | yes | yes |
+
+- **`gpt-6-luna` and `clef` judge equally well.** Neither failed good work. Clef's only misses were two indeterminate results.
+- **Clef rarely points at lines.** Asked where a failure shows, it almost always chooses "the artifact as a whole". Its failures still come with recommendations.
+- **`clef-flash` is not suited to gating CI with these presets.** It failed three good artifacts, including a standard README, and left 15% of clear cases undecided. It is fine for exploratory runs.
+- **Thresholds are not tuned per provider.** Clef's sweep peaks at fail ≤ 0.45, one case better than the default. That is too little evidence to diverge, and `evaluation.fail_threshold` can be set per project.

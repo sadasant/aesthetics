@@ -83,7 +83,7 @@ Guidelines can be scoped to paths, file types, directory depths, directories, th
 - **Honest about uncertainty.** Each outcome comes from a calibrated probability. When the model can't decide, the result says so.
 - **Fair to your history.** On a diff, every failure is marked as *introduced* by the change or *preexisting*, and by default only introduced problems fail CI.
 - **Built for CI.** It runs non-interactively, returns meaningful exit codes, writes a JSON report, and never modifies your files.
-- **Measured.** [Evals](evals/README.md) with 104 labeled judgments set its defaults: 97% correct on clear cases, with no false failures.
+- **Measured.** [Evals](evals/README.md) with 104 labeled judgments set its defaults: 97% correct on clear cases with OpenAI and 98% with Cloudflare Clef, with no false failures.
 
 ## Documentation
 

@@ -36,10 +36,10 @@ export CLOUDFLARE_ACCOUNT_ID=…
 ```yaml
 provider:
   type: cloudflare
-  model: clef-flash   # or clef
+  model: clef         # or clef-flash: faster, but less accurate
 ```
 
-Clef reads only about the first 2,000 tokens of its input, so Aesthetics keeps each request under 8,000 characters and reports when it truncated an artifact.
+Clef reads only about the first 2,000 tokens of its input, so Aesthetics keeps each request under 8,000 characters and reports when it truncated an artifact. Prefer `clef` for CI: in the [evals](../../evals/README.md), `clef` judged as well as OpenAI, while `clef-flash` failed some good artifacts.
 
 ## Laya, self-hosted
 
